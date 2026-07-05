@@ -1,1 +1,206 @@
-[]
+[
+    {
+        "id": "f2c30f269ef07f19",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "942356b676cc26bd",
+        "type": "mqtt-broker",
+        "name": "synology",
+        "broker": "192.168.1.187",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "sensors/status",
+        "birthQos": "1",
+        "birthRetain": "true",
+        "birthPayload": "ONLINE",
+        "birthMsg": {},
+        "closeTopic": "sensors/status",
+        "closeQos": "1",
+        "closeRetain": "true",
+        "closePayload": "OFFLINE",
+        "closeMsg": {},
+        "willTopic": "sensors/status",
+        "willQos": "1",
+        "willRetain": "true",
+        "willPayload": "DISCONNECTED",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "6ac91ed426f33bfe",
+        "type": "mqtt in",
+        "z": "f2c30f269ef07f19",
+        "name": "synology-sub-meteo",
+        "topic": "1_sayfield_cottages/+/meteo/#",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "942356b676cc26bd",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 120,
+        "wires": [
+            [
+                "0de060b4ac251f95"
+            ]
+        ]
+    },
+    {
+        "id": "95e5a214e426b517",
+        "type": "mqtt in",
+        "z": "f2c30f269ef07f19",
+        "name": "synology-sub-energy",
+        "topic": "1_sayfield_cottages/+/energy/#",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "942356b676cc26bd",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 440,
+        "wires": [
+            [
+                "1d9a8968a2d5f2b7"
+            ]
+        ]
+    },
+    {
+        "id": "1d9a8968a2d5f2b7",
+        "type": "debug",
+        "z": "f2c30f269ef07f19",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 100,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "17cfa0e6ea5f484d",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Add Meteo Msg",
+        "func": "let meteoMsg = RED.util.cloneMessage(msg);\n\ndelete meteoMsg.payload.tempc;\ndelete meteoMsg.payload.hum;\n\ndelete msg.payload.pressure_hPa;\n\nmsg.payload.category = 'environment';\n\nlet modelParts = msg.payload.model.split('-');\n\nmsg.payload.brand =\n    !!modelParts.length ? modelParts[0] : 'ecowit';\nmsg.payload.name =\n    modelParts.length > 1 \n        ? modelParts[1] + '_' + msg.payload.id\n        : msg.payload.id;\n\nmsg.topic = msg.topic.replace('meteo', 'environment');\n\nreturn [msg, meteoMsg];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 140,
+        "wires": [
+            [
+                "a89eec763e4a7b8e"
+            ],
+            [
+                "4db14ac818043dc4"
+            ]
+        ]
+    },
+    {
+        "id": "0de060b4ac251f95",
+        "type": "switch",
+        "z": "f2c30f269ef07f19",
+        "name": "Check If Pressure",
+        "property": "payload.pressure_hPa",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 150,
+        "y": 200,
+        "wires": [
+            [
+                "17cfa0e6ea5f484d"
+            ],
+            [
+                "4db14ac818043dc4"
+            ]
+        ]
+    },
+    {
+        "id": "4db14ac818043dc4",
+        "type": "debug",
+        "z": "f2c30f269ef07f19",
+        "name": "Meteo Sensor Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 470,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "d52da82a5052b295",
+        "type": "mqtt in",
+        "z": "f2c30f269ef07f19",
+        "name": "synology-sub-env",
+        "topic": "1_sayfield_cottages/+/environment/#",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "942356b676cc26bd",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 40,
+        "wires": [
+            [
+                "a89eec763e4a7b8e"
+            ]
+        ]
+    },
+    {
+        "id": "a89eec763e4a7b8e",
+        "type": "debug",
+        "z": "f2c30f269ef07f19",
+        "name": "Env Sensor Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 470,
+        "y": 40,
+        "wires": []
+    }
+]
