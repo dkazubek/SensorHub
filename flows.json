@@ -174,7 +174,7 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 130,
+        "x": 90,
         "y": 120,
         "wires": [
             [
@@ -196,7 +196,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 120,
-        "y": 440,
+        "y": 380,
         "wires": [
             [
                 "1d9a8968a2d5f2b7"
@@ -216,7 +216,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 100,
-        "y": 520,
+        "y": 460,
         "wires": []
     },
     {
@@ -224,21 +224,21 @@
         "type": "function",
         "z": "f2c30f269ef07f19",
         "name": "Add Meteo Msg",
-        "func": "let meteoMsg = RED.util.cloneMessage(msg);\n\ndelete meteoMsg.payload.tempc;\ndelete meteoMsg.payload.hum;\n\ndelete msg.payload.pressure_hPa;\n\nmsg.payload.category = 'environment';\n\nlet modelParts = msg.payload.model.split('-');\n\nmsg.payload.brand =\n    !!modelParts.length ? modelParts[0] : 'ecowit';\nmsg.payload.name =\n    modelParts.length > 1 \n        ? modelParts[1] + '_' + msg.payload.id\n        : msg.payload.id;\n\nmsg.topic = msg.topic.replace('meteo', 'environment');\n\nreturn [msg, meteoMsg];",
+        "func": "let meteoMsg = RED.util.cloneMessage(msg);\n\nreturn [msg, meteoMsg];",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 380,
-        "y": 140,
+        "x": 180,
+        "y": 260,
         "wires": [
             [
-                "a89eec763e4a7b8e"
+                "dc505af710fedf0e"
             ],
             [
-                "4db14ac818043dc4"
+                "11e71f26f9b5471d"
             ]
         ]
     },
@@ -251,10 +251,10 @@
         "propertyType": "msg",
         "rules": [
             {
-                "t": "nnull"
+                "t": "null"
             },
             {
-                "t": "else"
+                "t": "nnull"
             }
         ],
         "checkall": "true",
@@ -264,29 +264,12 @@
         "y": 200,
         "wires": [
             [
-                "17cfa0e6ea5f484d"
+                "684f8ba18c8a7c88"
             ],
             [
-                "4db14ac818043dc4"
+                "17cfa0e6ea5f484d"
             ]
         ]
-    },
-    {
-        "id": "4db14ac818043dc4",
-        "type": "debug",
-        "z": "f2c30f269ef07f19",
-        "name": "Meteo Sensor Data",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 470,
-        "y": 220,
-        "wires": []
     },
     {
         "id": "d52da82a5052b295",
@@ -301,11 +284,11 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 130,
-        "y": 40,
+        "x": 90,
+        "y": 60,
         "wires": [
             [
-                "a89eec763e4a7b8e"
+                "684f8ba18c8a7c88"
             ]
         ]
     },
@@ -313,7 +296,7 @@
         "id": "a89eec763e4a7b8e",
         "type": "debug",
         "z": "f2c30f269ef07f19",
-        "name": "Env Sensor Data",
+        "name": "All Sensor Data",
         "active": true,
         "tosidebar": true,
         "console": false,
@@ -322,9 +305,89 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 470,
-        "y": 40,
+        "x": 640,
+        "y": 80,
         "wires": []
+    },
+    {
+        "id": "36138bd7a70b717a",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "map2InfluxDBPoint",
+        "func": "const sensor = msg.payload;\n\nif (!sensor || typeof sensor !== \"object\") {\n    node.error(\"Expected a JSON sensor object in msg.payload\", msg);\n\n    return null;\n}\n\nconst timestamp = new Date(sensor.last_logged);\n\nif (isNaN(timestamp.getTime())) {\n    node.error(`Invalid last_logged timestamp: ${sensor.last_logged}`, msg);\n\n    return null;\n}\n\nconst measurmentByCategory = {\n    environment: \"environment\",\n    meteo: \"weather\"\n}\n\nconst measurment = measurmentByCategory[sensor.category];\n\nif (!measurment) {\n    node.warn(`Unsupported sensor type: ${sensor.category}`)\n}\n\nconst fields = {};\n\nfunction addNumber(sourceKey, fieldKey) {\n    if (Number.isFinite(sensor[sourceKey])) {\n        fields[fieldKey] = sensor[sourceKey];\n    }\n}\n\n// Readings shared by thermometers and the weather station\naddNumber(\"tempc\", \"temperature_c\");\naddNumber(\"hum\", \"humidity_pct\");\n\n// Category-specific readings\nif (sensor.category == \"environment\") {\n    addNumber(\"batt\", \"battery_pct\");\n}\n\nif (sensor.category === \"meteo\") {\n    // true/false is a clearer representation than the collector's 1/0.\n    if (sensor.battery_ok === 0 || sensor.battery_ok === 1) {\n        fields.battery_ok = Boolean(sensor.battery_ok);\n    }\n\n    addNumber(\"wind_dir_deg\", \"wind_direction_deg\");\n    addNumber(\"wind_avg_m_s\", \"wind_speed_avg_m_s\");\n    addNumber(\"wind_max_m_s\", \"wind_gust_m_s\");\n    addNumber(\"rain_mm\", \"rain_total_mm\");\n    addNumber(\"uv\", \"uv\");\n    addNumber(\"uvi\", \"uv_index\");\n    addNumber(\"light_lux\", \"illuminance_lux\");\n    addNumber(\"pressure_hPa\", \"pressure_hPa\");\n}\n\nif (Object.keys(fields).length == 0) {\n    node.warn(\"No usable sensor readings found.\");\n\n    return null;\n}\n\nconst tags = {\n    device_id: String(sensor.id),\n    house: String(sensor.house),\n    room: String(sensor.room),\n    sensor_name: String(sensor.name),\n    sensor_type: String(sensor.type),\n    brand: String(sensor.brand),\n    model: String(sensor.model),\n    radio_frequency: String(sensor.frequency)\n};\n\n// Omit absent optional tags rather than storing \"undefined\".\nfor (const [key, value] of Object.entries(tags)) {\n    if (!value || value == \"undefined\") {\n        delete tags[key];\n    }\n}\n\nmsg.payload = [{\n    measurment,\n    fields,\n    tags,\n    timestamp\n}];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 730,
+        "y": 160,
+        "wires": [
+            [
+                "a89eec763e4a7b8e"
+            ]
+        ]
+    },
+    {
+        "id": "dc505af710fedf0e",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "sanitiseEnvironment",
+        "func": "delete msg.payload.pressure_hPa;\n\nmsg.payload.category = 'environment';\n\nlet modelParts = msg.payload.model.split('-');\n\nmsg.payload.brand =\n    !!modelParts.length ? modelParts[0] : 'ecowit';\nmsg.payload.name =\n    modelParts.length > 1\n        ? modelParts[1] + '_' + msg.payload.id\n        : msg.payload.id;\n\nmsg.topic = msg.topic.replace('meteo', 'environment');\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 240,
+        "wires": [
+            [
+                "684f8ba18c8a7c88"
+            ]
+        ]
+    },
+    {
+        "id": "11e71f26f9b5471d",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "sanitiseMeteo",
+        "func": "delete msg.payload.tempc;\ndelete msg.payload.hum;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 300,
+        "wires": [
+            [
+                "684f8ba18c8a7c88"
+            ]
+        ]
+    },
+    {
+        "id": "684f8ba18c8a7c88",
+        "type": "rbe",
+        "z": "f2c30f269ef07f19",
+        "name": "Block Duplicates",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload.last_logged",
+        "topi": "topic",
+        "x": 690,
+        "y": 220,
+        "wires": [
+            [
+                "36138bd7a70b717a"
+            ]
+        ]
     },
     {
         "id": "9275611929306795",
