@@ -177,6 +177,21 @@
         "rejectUnauthorized": true
     },
     {
+        "id": "69af68aa4e46ad4e",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "Cloud InfluxDB",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "https://eu-central-1-1.aws.cloud2.influxdata.com",
+        "timeout": 10,
+        "rejectUnauthorized": true
+    },
+    {
         "id": "6ac91ed426f33bfe",
         "type": "mqtt in",
         "z": "f2c30f269ef07f19",
@@ -193,7 +208,7 @@
         "y": 120,
         "wires": [
             [
-                "0de060b4ac251f95"
+                "8c24abb7c407ef71"
             ]
         ]
     },
@@ -211,7 +226,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 120,
-        "y": 380,
+        "y": 420,
         "wires": [
             [
                 "1d9a8968a2d5f2b7"
@@ -231,7 +246,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 100,
-        "y": 460,
+        "y": 500,
         "wires": []
     },
     {
@@ -247,7 +262,7 @@
         "finalize": "",
         "libs": [],
         "x": 180,
-        "y": 260,
+        "y": 280,
         "wires": [
             [
                 "dc505af710fedf0e"
@@ -276,7 +291,7 @@
         "repair": false,
         "outputs": 2,
         "x": 150,
-        "y": 200,
+        "y": 220,
         "wires": [
             [
                 "684f8ba18c8a7c88"
@@ -321,7 +336,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 900,
-        "y": 180,
+        "y": 200,
         "wires": []
     },
     {
@@ -337,11 +352,12 @@
         "finalize": "",
         "libs": [],
         "x": 710,
-        "y": 260,
+        "y": 280,
         "wires": [
             [
                 "91944188da96c6e1",
-                "a89eec763e4a7b8e"
+                "a89eec763e4a7b8e",
+                "cdf97452c389ff0d"
             ]
         ]
     },
@@ -350,7 +366,7 @@
         "type": "function",
         "z": "f2c30f269ef07f19",
         "name": "sanitiseEnvironment",
-        "func": "delete msg.payload.pressure_hPa;\n\nmsg.payload.category = 'environment';\n\nlet modelParts = msg.payload.model.split('-');\n\nmsg.payload.brand =\n    !!modelParts.length ? modelParts[0] : 'ecowit';\nmsg.payload.name =\n    modelParts.length > 1\n        ? modelParts[1] + '_' + msg.payload.id\n        : msg.payload.id;\n\nmsg.topic = msg.topic.replace('meteo', 'environment');\n\nreturn msg;",
+        "func": "delete msg.payload.pressure_hPa;\n\nmsg.payload.category = 'environment';\nmsg.topic = msg.topic.replace('meteo', 'environment');\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -358,7 +374,7 @@
         "finalize": "",
         "libs": [],
         "x": 400,
-        "y": 240,
+        "y": 260,
         "wires": [
             [
                 "684f8ba18c8a7c88"
@@ -378,7 +394,7 @@
         "finalize": "",
         "libs": [],
         "x": 380,
-        "y": 300,
+        "y": 320,
         "wires": [
             [
                 "684f8ba18c8a7c88"
@@ -398,7 +414,7 @@
         "property": "payload.last_logged",
         "topi": "topic",
         "x": 690,
-        "y": 220,
+        "y": 240,
         "wires": [
             [
                 "36138bd7a70b717a"
@@ -418,8 +434,8 @@
         "retentionPolicyV18Flux": "",
         "org": "sensorhub",
         "bucket": "home_sensors",
-        "x": 730,
-        "y": 300,
+        "x": 750,
+        "y": 320,
         "wires": []
     },
     {
@@ -436,7 +452,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 580,
-        "y": 380,
+        "y": 420,
         "wires": []
     },
     {
@@ -461,7 +477,7 @@
         "payload": "[{\"measurement\":\"environment\",\"fields\":{\"temperature_c\":24.4,\"humidity_pct\":53,\"battery_pct\":19},\"tags\":{\"device_id\":\"A4:C1:38:17:06:8A\",\"house\":\"1 sayfield cottages\",\"room\":\"main bedroom\",\"sensor_name\":\"ATC_17068A\",\"sensor_type\":\"thermometer\",\"brand\":\"Xiaomi\",\"model\":\"LYWSD03MMC_MJWSD05MMC_ATC\"},\"timestamp\":1785752521202}]",
         "payloadType": "json",
         "x": 390,
-        "y": 380,
+        "y": 420,
         "wires": [
             [
                 "7df3eb7d77264c5e"
@@ -476,10 +492,47 @@
         "scope": null,
         "uncaught": false,
         "x": 380,
-        "y": 440,
+        "y": 480,
         "wires": [
             [
                 "7df3eb7d77264c5e"
+            ]
+        ]
+    },
+    {
+        "id": "cdf97452c389ff0d",
+        "type": "influxdb batch",
+        "z": "f2c30f269ef07f19",
+        "influxdb": "69af68aa4e46ad4e",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Cloud InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "sensorhub",
+        "bucket": "home_sensors",
+        "x": 920,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "8c24abb7c407ef71",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Add Sensor Name",
+        "func": "let modelParts = msg.payload.model.split('-');\n\nmsg.payload.brand =\n    !!modelParts.length ? modelParts[0] : 'ecowit';\nmsg.payload.name =\n    modelParts.length > 1\n        ? modelParts[1] + '_' + msg.payload.id\n        : msg.payload.id;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 130,
+        "y": 180,
+        "wires": [
+            [
+                "0de060b4ac251f95"
             ]
         ]
     },
