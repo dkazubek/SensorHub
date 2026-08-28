@@ -1,6 +1,11 @@
 SensorHub
 =========
 
+<p align="center">
+  <img src="images/raspberry-pi-4b.jpeg" alt="My Raspberry Pi" width="600"><br>
+  <em>Figure 1: My Raspberry Pi 4B setup running headless.</em>
+</p>
+
 ## 🏗️ System Architecture
 
 This project is built around an event-driven, hybrid-cloud IoT architecture designed for high availability, local resilience, and secure remote monitoring. The system splits responsibilities across localized edge collection, a centralized home message broker, a dedicated gateway processor, and a mirrored cloud visualization layer.
