@@ -6,7 +6,7 @@ SensorHub
 This project is built around an event-driven, hybrid-cloud IoT architecture designed for high availability, local resilience, and secure remote monitoring. The system splits responsibilities across localized edge collection, a centralized home message broker, a dedicated gateway processor, and a mirrored cloud visualization layer.
 
 ```mermaid
-graph LR
+graph TD
     %% Styles and Definitions
     classDef hardware fill:#2d3748,stroke:#4a5568,stroke-width:2px,color:#fff;
     classDef container fill:#1a202c,stroke:#3182ce,stroke-width:2px,color:#fff;
@@ -53,7 +53,6 @@ graph LR
     
     IDB_Loc -->|Read Data| GF_Loc
     IDB_Cld -->|Read Data| GF_Cld
-
 ```
 
 ### Architectural Breakdown
