@@ -1,1 +1,26 @@
+# macOS
+.DS_Store
+
+# Node-RED backups and runtime credentials
 *.backup
+*.backup.*
+*.bak
+flows_cred.json
+
+# Private deployment configuration
+.env
+.env.*
+!.env.example
+settings.local.js
+config.local.*
+
+# Private certificates and keys
+*.key
+*.pem
+*.pfx
+*.p12
+
+# Dependencies and logs
+node_modules/
+*.log
+npm-debug.log*
