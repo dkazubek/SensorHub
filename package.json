@@ -1,8 +1,20 @@
 {
     "name": "SensorHub",
-    "description": "A Node-RED Project",
-    "version": "0.0.1",
-    "dependencies": {},
+    "version": "0.1.0",
+    "description": "A Node-RED edge gateway for collecting sensor readings and sending them to local InfluxDB and cloud instance.",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dkazubek/SensorHub.git"
+    },
+    "bugs": {
+        "url": "https://github.com/dkazubek/SensorHub/issues"
+    },
+    "homepage": "https://github.com/dkazubek/SensorHub#readme",
+  "dependencies": {
+    "node-red-contrib-influxdb": "0.7.0",
+    "node-red-dashboard": "3.6.6"
+  },
     "node-red": {
         "settings": {
             "flowFile": "flows.json",
