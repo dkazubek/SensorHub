@@ -19,7 +19,7 @@
         "id": "942356b676cc26bd",
         "type": "mqtt-broker",
         "name": "synology",
-        "broker": "192.168.1.187",
+        "broker": "${CENTRAL_MQTT_HOST}",
         "port": 1883,
         "clientid": "",
         "autoConnect": true,
@@ -172,7 +172,7 @@
         "usetls": false,
         "tls": "",
         "influxdbVersion": "2.0",
-        "url": "http://192.168.1.174:8087",
+        "url": "${LOCAL_INFLUX_URL}",
         "timeout": 10,
         "rejectUnauthorized": true
     },
@@ -187,17 +187,23 @@
         "usetls": false,
         "tls": "",
         "influxdbVersion": "2.0",
-        "url": "https://eu-central-1-1.aws.cloud2.influxdata.com",
+        "url": "${CLOUD_INFLUX_URL}",
         "timeout": 10,
         "rejectUnauthorized": true
+    },
+    {
+        "id": "440113fc9f794892",
+        "type": "global-config",
+        "name": "global-config",
+        "env": []
     },
     {
         "id": "6ac91ed426f33bfe",
         "type": "mqtt in",
         "z": "f2c30f269ef07f19",
         "name": "synology-sub-meteo",
-        "topic": "1_sayfield_cottages/+/meteo/#",
-        "qos": "2",
+        "topic": "${MQTT_METEO_TOPIC}",
+        "qos": "1",
         "datatype": "auto-detect",
         "broker": "942356b676cc26bd",
         "nl": false,
@@ -217,8 +223,8 @@
         "type": "mqtt in",
         "z": "f2c30f269ef07f19",
         "name": "synology-sub-energy",
-        "topic": "1_sayfield_cottages/+/energy/#",
-        "qos": "2",
+        "topic": "${MQTT_ENERGY_TOPIC}",
+        "qos": "1",
         "datatype": "auto-detect",
         "broker": "942356b676cc26bd",
         "nl": false,
@@ -306,8 +312,8 @@
         "type": "mqtt in",
         "z": "f2c30f269ef07f19",
         "name": "synology-sub-env",
-        "topic": "1_sayfield_cottages/+/environment/#",
-        "qos": "2",
+        "topic": "${MQTT_ENVIRONMENT_TOPIC}",
+        "qos": "1",
         "datatype": "auto-detect",
         "broker": "942356b676cc26bd",
         "nl": false,
@@ -456,43 +462,14 @@
         "wires": []
     },
     {
-        "id": "e0fd4324b801b83a",
-        "type": "inject",
-        "z": "f2c30f269ef07f19",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "1_sayfield_cottages/main_bedroom/environment/LYWSD03MMC_MJWSD05MMC_ATC/ATC_17068A",
-        "payload": "[{\"measurement\":\"environment\",\"fields\":{\"temperature_c\":24.4,\"humidity_pct\":53,\"battery_pct\":19},\"tags\":{\"device_id\":\"A4:C1:38:17:06:8A\",\"house\":\"1 sayfield cottages\",\"room\":\"main bedroom\",\"sensor_name\":\"ATC_17068A\",\"sensor_type\":\"thermometer\",\"brand\":\"Xiaomi\",\"model\":\"LYWSD03MMC_MJWSD05MMC_ATC\"},\"timestamp\":1785752521202}]",
-        "payloadType": "json",
-        "x": 390,
-        "y": 420,
-        "wires": [
-            [
-                "7df3eb7d77264c5e"
-            ]
-        ]
-    },
-    {
         "id": "869e123f505d6282",
         "type": "catch",
         "z": "f2c30f269ef07f19",
         "name": "",
         "scope": null,
         "uncaught": false,
-        "x": 380,
-        "y": 480,
+        "x": 400,
+        "y": 420,
         "wires": [
             [
                 "7df3eb7d77264c5e"
@@ -675,7 +652,7 @@
         "id": "d7f531765bae8fab",
         "type": "exec",
         "z": "22618313028131e9",
-        "command": "python /data/projects/SensorHub/mem.py -u",
+        "command": "${MEMORY_USAGE_COMMAND}",
         "addpay": "payload",
         "append": "",
         "useSpawn": "false",
