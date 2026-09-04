@@ -145,6 +145,7 @@ Example data going into the InfluxDB:
 * **Software:**
     * Docker with IOTstack configured with Node-RED, InfluxDB and Grafana containers.
     * Node-RED project dependencies are installed from `package.json`.
+    * InfluxDB URLs and MQTT topics are loaded from environment variables.
 * **Python helper:** `mem.py` reports memory usage for the Node-RED health dashboard. Install its dependency:
 
     ```bash
