@@ -552,7 +552,7 @@
         "z": "f2c30f269ef07f19",
         "name": "azure-iot-pub",
         "topic": "${IOT_HUB_MQTT_TOPIC}",
-        "qos": "2",
+        "qos": "1",
         "retain": "false",
         "respTopic": "",
         "contentType": "",
