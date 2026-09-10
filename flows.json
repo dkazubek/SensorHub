@@ -198,6 +198,38 @@
         "env": []
     },
     {
+        "id": "4867c038b3d078a0",
+        "type": "mqtt-broker",
+        "name": "azure-iot-hub",
+        "broker": "${IOT_HUB_MQTT_HOST}",
+        "port": "8883",
+        "tls": "",
+        "clientid": "sensorhub-rpi4",
+        "autoConnect": true,
+        "usetls": true,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
         "id": "6ac91ed426f33bfe",
         "type": "mqtt in",
         "z": "f2c30f269ef07f19",
@@ -341,7 +373,7 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 900,
+        "x": 920,
         "y": 200,
         "wires": []
     },
@@ -423,7 +455,8 @@
         "y": 240,
         "wires": [
             [
-                "36138bd7a70b717a"
+                "36138bd7a70b717a",
+                "6889bc3c85cee9b9"
             ]
         ]
     },
@@ -512,6 +545,24 @@
                 "0de060b4ac251f95"
             ]
         ]
+    },
+    {
+        "id": "6889bc3c85cee9b9",
+        "type": "mqtt out",
+        "z": "f2c30f269ef07f19",
+        "name": "azure-iot-pub",
+        "topic": "${IOT_HUB_MQTT_TOPIC}",
+        "qos": "2",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "4867c038b3d078a0",
+        "x": 860,
+        "y": 120,
+        "wires": []
     },
     {
         "id": "9275611929306795",
