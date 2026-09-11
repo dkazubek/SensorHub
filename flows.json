@@ -242,8 +242,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 90,
-        "y": 120,
+        "x": 110,
+        "y": 140,
         "wires": [
             [
                 "8c24abb7c407ef71"
@@ -264,7 +264,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 120,
-        "y": 420,
+        "y": 600,
         "wires": [
             [
                 "1d9a8968a2d5f2b7"
@@ -283,8 +283,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 100,
-        "y": 500,
+        "x": 320,
+        "y": 600,
         "wires": []
     },
     {
@@ -299,8 +299,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 180,
-        "y": 280,
+        "x": 200,
+        "y": 300,
         "wires": [
             [
                 "dc505af710fedf0e"
@@ -328,8 +328,8 @@
         "checkall": "true",
         "repair": false,
         "outputs": 2,
-        "x": 150,
-        "y": 220,
+        "x": 170,
+        "y": 240,
         "wires": [
             [
                 "684f8ba18c8a7c88"
@@ -352,8 +352,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 90,
-        "y": 60,
+        "x": 110,
+        "y": 80,
         "wires": [
             [
                 "684f8ba18c8a7c88"
@@ -369,12 +369,12 @@
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
+        "complete": "true",
+        "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 920,
-        "y": 200,
+        "x": 440,
+        "y": 520,
         "wires": []
     },
     {
@@ -389,12 +389,11 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 710,
-        "y": 280,
+        "x": 730,
+        "y": 320,
         "wires": [
             [
                 "91944188da96c6e1",
-                "a89eec763e4a7b8e",
                 "cdf97452c389ff0d"
             ]
         ]
@@ -411,8 +410,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 400,
-        "y": 260,
+        "x": 420,
+        "y": 280,
         "wires": [
             [
                 "684f8ba18c8a7c88"
@@ -431,8 +430,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 380,
-        "y": 320,
+        "x": 440,
+        "y": 340,
         "wires": [
             [
                 "684f8ba18c8a7c88"
@@ -455,8 +454,7 @@
         "y": 240,
         "wires": [
             [
-                "36138bd7a70b717a",
-                "6889bc3c85cee9b9"
+                "30ed701bcccbb20b"
             ]
         ]
     },
@@ -473,8 +471,8 @@
         "retentionPolicyV18Flux": "",
         "org": "sensorhub",
         "bucket": "home_sensors",
-        "x": 750,
-        "y": 320,
+        "x": 770,
+        "y": 360,
         "wires": []
     },
     {
@@ -490,8 +488,8 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 580,
-        "y": 420,
+        "x": 880,
+        "y": 720,
         "wires": []
     },
     {
@@ -501,8 +499,8 @@
         "name": "",
         "scope": null,
         "uncaught": false,
-        "x": 400,
-        "y": 420,
+        "x": 700,
+        "y": 720,
         "wires": [
             [
                 "7df3eb7d77264c5e"
@@ -522,8 +520,8 @@
         "retentionPolicyV18Flux": "",
         "org": "sensorhub",
         "bucket": "home_sensors",
-        "x": 920,
-        "y": 280,
+        "x": 960,
+        "y": 320,
         "wires": []
     },
     {
@@ -538,8 +536,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 130,
-        "y": 180,
+        "x": 150,
+        "y": 200,
         "wires": [
             [
                 "0de060b4ac251f95"
@@ -560,9 +558,323 @@
         "correl": "",
         "expiry": "",
         "broker": "4867c038b3d078a0",
-        "x": 860,
-        "y": 120,
+        "x": 440,
+        "y": 460,
         "wires": []
+    },
+    {
+        "id": "30ed701bcccbb20b",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Cache Latest Readings",
+        "func": "let sensors = flow.get('sensors') || [];\n\n// ==========================================\n// 1. AUTOMATIC CLEANUP (e.g., 24-hour window)\n// ==========================================\nconst EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds\nconst cutoffTime = Date.now() - EXPIRATION_MS;\n\nsensors = sensors.filter(entry => {\n    // If last_logged isn't a valid timestamp string, keep it to be safe\n    if (!entry.last_logged) return true;\n\n    // Keep the entry only if it was updated within the expiration window\n    return Date.parse(entry.last_logged) > cutoffTime;\n});\n\n// ==========================================\n// 2. PROCESS INCOMING READING\n// ==========================================\nconst sensorName = !!msg.payload.name ? msg.payload.name : msg.payload.model;\nconst sensorId = `${msg.payload.id}_${sensorName}`;\n\nlet found = sensors.find(t => t.id == sensorId);\n\nif (!!found) {\n    found.lastLogged = msg.payload.last_logged;\n    found.payload = msg.payload;\n    found.totalHits++;\n} else {\n    found = {\n        id: sensorId,\n        lastLogged: msg.payload.last_logged,\n        totalHits: 1,\n        payload: msg.payload,\n        topic: msg.topic\n    }\n\n    sensors.push(found);\n}\n\nflow.set('sensors', sensors);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 730,
+        "y": 280,
+        "wires": [
+            [
+                "36138bd7a70b717a"
+            ]
+        ]
+    },
+    {
+        "id": "f5e491a38cb28819",
+        "type": "inject",
+        "z": "f2c30f269ef07f19",
+        "name": "Send Readings to IoT Hub",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "120",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 400,
+        "wires": [
+            [
+                "047f113bf604f9af"
+            ]
+        ]
+    },
+    {
+        "id": "047f113bf604f9af",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Get Latest Readings",
+        "func": "let readings = [];\nconst sensors = flow.get('sensors') || [];\nlet lastSentSensors = flow.get('lastSentSensors') || [];\n\nif (!sensors.length) {\n    return msg;\n}\n\n// ==========================================\n// 1. AUTOMATIC CLEANUP (e.g., 24-hour window)\n// ==========================================\nconst EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds\nconst cutoffTime = Date.now() - EXPIRATION_MS;\n\nlastSentSensors = lastSentSensors.filter(entry => {\n    // If last_logged isn't a valid timestamp string, keep it to be safe\n    if (!entry.last_logged) return true;\n\n    // Keep the entry only if it was updated within the expiration window\n    return Date.parse(entry.last_logged) > cutoffTime;\n});\n\n// ==========================================\n// 2. PROCESS INCOMING READINGS\n// ==========================================\nfor (let t of sensors) {\n    let found = lastSentSensors.find(p => p.id == t.id);\n    let isOldReading = \n        !!found\n            ? found.last_logged == t.payload.last_logged\n            : false;\n    \n    if(!!isOldReading) {\n        continue;\n    }\n\n    if (!!found) {\n        found.last_logged = t.payload.last_logged;\n    } else {\n        lastSentSensors.push({\n            id: t.id,\n            last_logged: t.payload.last_logged\n        });\n    }\n\n    const reading = { ...t.payload };\n    readings.push(reading);\n}\n\n// Save the cleaned and updated array back to flow context\nflow.set('lastSentSensors', lastSentSensors);\n\nmsg.payload = readings;\n\nif (readings.length > 0) {\n    msg.payload = readings;\n    return msg;\n} else {\n    return null; // Stops the flow if there are no new readings\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 160,
+        "y": 440,
+        "wires": [
+            [
+                "37c36c7a180248b5"
+            ]
+        ]
+    },
+    {
+        "id": "37c36c7a180248b5",
+        "type": "split",
+        "z": "f2c30f269ef07f19",
+        "name": "Split Readings Array",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 180,
+        "y": 480,
+        "wires": [
+            [
+                "6889bc3c85cee9b9",
+                "a89eec763e4a7b8e"
+            ]
+        ]
+    },
+    {
+        "id": "bb31793609a31051",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Clear Sensors",
+        "func": "flow.set('sensors', []);\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "13ee159656f6a0e8",
+        "type": "inject",
+        "z": "f2c30f269ef07f19",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 720,
+        "wires": [
+            [
+                "bb31793609a31051"
+            ]
+        ]
+    },
+    {
+        "id": "a832858274644932",
+        "type": "inject",
+        "z": "f2c30f269ef07f19",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 820,
+        "wires": [
+            [
+                "a5a3da4da1fb9261"
+            ]
+        ]
+    },
+    {
+        "id": "a5a3da4da1fb9261",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Get Sensors",
+        "func": "const sensors = flow.get('sensors');\n\nmsg.payload = sensors;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 820,
+        "wires": [
+            [
+                "23f7e2923055ab69"
+            ]
+        ]
+    },
+    {
+        "id": "23f7e2923055ab69",
+        "type": "debug",
+        "z": "f2c30f269ef07f19",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "afc2c8f196c8d494",
+        "type": "inject",
+        "z": "f2c30f269ef07f19",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 860,
+        "wires": [
+            [
+                "41b7c685193a0804"
+            ]
+        ]
+    },
+    {
+        "id": "41b7c685193a0804",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Get Last Sent Sensors",
+        "func": "const sensors = flow.get('lastSentSensors');\n\nmsg.payload = sensors;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 860,
+        "wires": [
+            [
+                "de145917e59e7ef4"
+            ]
+        ]
+    },
+    {
+        "id": "de145917e59e7ef4",
+        "type": "debug",
+        "z": "f2c30f269ef07f19",
+        "name": "debug 6",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "5c6d688c61306d77",
+        "type": "function",
+        "z": "f2c30f269ef07f19",
+        "name": "Clear Last Sent Sensors",
+        "func": "flow.set('lastSentSensors', []);\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3aeb05584531891b",
+        "type": "inject",
+        "z": "f2c30f269ef07f19",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 760,
+        "wires": [
+            [
+                "5c6d688c61306d77"
+            ]
+        ]
     },
     {
         "id": "9275611929306795",
