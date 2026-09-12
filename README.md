@@ -1,7 +1,7 @@
 SensorHub
 =========
 
-**SensorHub** is a processing and storage gateway running on a headless Raspberry Pi 4B. It collects sensor readings coming from the central message broker as MQTT messages. The readings are sanitised before being written into the local InfluxDB time-series database. Local Grafana instance queries that database with a dashboard showing its data on graphs. InfluxDB / Grafana setup is mirrored in the cloud for remote access.</br>
+**SensorHub** is a processing and storage gateway running on a headless Raspberry Pi 4B. It collects sensor readings coming from the central message broker as MQTT messages. The readings are sanitised before being written into the local InfluxDB time-series database. Local Grafana instance queries that database with a dashboard showing its data on graphs. InfluxDB / Grafana setup is mirrored in the cloud for remote access. Sanitised readings are also published to **Azure IoT Hub** over MQTT, giving the pipeline a standards-based device-to-cloud channel independent of the InfluxDB mirror.</br>
 This project brings together a weather station data collected by [SDRGateway](https://github.com/dkazubek/SDRGateway) and data collected from Bluetooth thermometers by [BTGateway](https://github.com/dkazubek/BTGateway).
 
 <p align="center">
@@ -43,12 +43,13 @@ graph TD
     subgraph Cloud ["Cloud Infrastructure"]
         IDB_Cld[(InfluxDB Cloud)]
         GF_Cld[Grafana Cloud]
+        IOTHub[Azure IoT Hub]
     end
 
     %% Apply Styles
     class RPiEdge,NAS,Pi4 hardware;
     class MQ,NR,IDB_Loc,GF_Loc container;
-    class IDB_Cld,GF_Cld cloud;
+    class IDB_Cld,GF_Cld,IOTHub cloud;
 
     %% Data Flow Connections
     WS -->|Sensor Readings| RPiEdge
@@ -58,6 +59,7 @@ graph TD
     
     NR -->|Sanitise & Write| IDB_Loc
     NR -->|Sanitise & Upload| IDB_Cld
+    NR -->|Publish MQTT Telemetry| IOTHub
     
     IDB_Loc -->|Read Data| GF_Loc
     IDB_Cld -->|Read Data| GF_Cld
@@ -135,10 +137,16 @@ Example data going into the InfluxDB:
 * **Local Dashboards (Grafana)**: A local Grafana container queries the local InfluxDB instance, providing real-time, high-resolution dashboards accessible anywhere inside the home network.
 * **Cloud Mirroring (InfluxDB Cloud & Grafana Cloud)**: To bypass complex home-network port forwarding or VPN setups, Node-RED simultaneously pushes data to InfluxDB Cloud. A mirrored Grafana Cloud dashboard reads from this cloud instance, granting secure, encrypted remote access from anywhere in the world.
 
+#### 5. Cloud Telemetry Export (Azure IoT Hub)
+* **Component**: **Azure IoT Hub** (Free tier), connected over MQTT on port 8883 with TLS and SAS token authentication.
+* **Function**: In parallel with the InfluxDB dual-write, Node-RED publishes the same sanitised readings to Azure IoT Hub under a single registered device identity (`sensorhub-rpi4`), giving the pipeline a standards-based device-to-cloud channel that's decoupled from the InfluxDB/Grafana stack. This keeps cloud credentials centralised at the aggregation point rather than distributed across the edge collectors (SDRGateway, BTGateway).
+* **Why it's there**: This channel exists independently of the dashboards — it's the entry point for future Azure-native processing (e.g. an Azure Function consuming the hub's built-in Event Hub-compatible endpoint) rather than another way to visualise the same data.
+
 ### System Resilience Features
 * **Decoupling**: If the Raspberry Pi 4B goes offline for maintenance, the Mosquitto broker on the Synology NAS caches incoming MQTT data, preventing data loss.
 * **Hybrid Cloud**: If the home internet connection drops, the local InfluxDB and Grafana instances continue to function perfectly. Data resumes syncing to the cloud once the connection is restored.
 * **Containerization**: All software components run in isolated Docker containers, allowing for easy updates, independent scaling, and backups via IOTstack.
+* **Independent Telemetry Path**: The Azure IoT Hub publish runs alongside, not through, the InfluxDB dual-write. If the cloud InfluxDB/Grafana mirror were ever reconfigured or removed, the Azure telemetry channel is unaffected, and vice versa.
 
 ### Prerequisites / Deploy
 * **Hardware:** According to [IOTstack](https://sensorsiot.github.io/IOTstack/Basic_setup/) requirements, a device like Raspberry Pi 3B+ or 4B would perform well.
@@ -152,3 +160,8 @@ Example data going into the InfluxDB:
     sudo apt install python3-psutil
     ```
 * **Dashboard:** Grafana dashboard can be imported into a Grafana instance from `dashboards/home-weather.json`.
+* **Azure IoT Hub:**
+    * An IoT Hub (Free tier is sufficient) with a single device registered as `sensorhub-rpi4`, using symmetric key (SAS) authentication.
+    * `IOT_HUB_MQTT_HOST` and `IOT_HUB_MQTT_TOPIC` (set to `devices/sensorhub-rpi4/messages/events/`) are loaded from environment variables, matching the pattern used for the other MQTT/InfluxDB endpoints.
+    * The device's SAS token is stored as MQTT broker credentials in Node-RED (not committed to `flows.json`) and needs periodic renewal before its expiry.
+    * The `mqtt out` node's **Topic** field must be set explicitly — Azure IoT Hub only accepts publishes to its fixed device topic and will disconnect a client that leaves the topic to be set per-message.
