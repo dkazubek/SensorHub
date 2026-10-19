@@ -2,7 +2,11 @@ SensorHub
 =========
 
 **SensorHub** is a processing and storage gateway running on a headless Raspberry Pi 4B. It collects sensor readings coming from the central message broker as MQTT messages. The readings are sanitised before being written into the local InfluxDB time-series database. Local Grafana instance queries that database with a dashboard showing its data on graphs. InfluxDB / Grafana setup is mirrored in the cloud for remote access. Sanitised readings are also published to **Azure IoT Hub** over MQTT, giving the pipeline a standards-based device-to-cloud channel independent of the InfluxDB mirror.</br>
-This project brings together a weather station data collected by [SDRGateway](https://github.com/dkazubek/SDRGateway) and data collected from Bluetooth thermometers by [BTGateway](https://github.com/dkazubek/BTGateway).
+This project brings together a weather station data collected by [SDRGateway](https://github.com/dkazubek/SDRGateway) and data collected from Bluetooth thermometers by [BTGateway](https://github.com/dkazubek/BTGateway).</br>
+[IoTHubProcessor](https://github.com/dkazubek/IoTHubProcessor) — a second, decoupled
+  consumer of this project's Azure IoT Hub telemetry stream. An Azure Functions app
+  (.NET 10, isolated worker model) that persists readings to Cosmos DB and raises
+  Service Bus alerts for low-battery devices.
 
 <p align="center">
   <img src="images/raspberry-pi-4b.jpeg" alt="My Raspberry Pi" width="600"><br>
